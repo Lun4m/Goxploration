@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+
+	"pokedexcli/internal/pokecache"
 )
 
 type Config struct {
@@ -66,29 +67,42 @@ type Location struct {
 	} `json:"pokemon_encounters"`
 }
 
-func GetLocation(url string) {
-	response, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	data, err := io.ReadAll(response.Body)
-	response.Body.Close()
-	if response.StatusCode > 299 {
-		fmt.Println("Response failed with status code: %d and\nbody: %s\n", response.StatusCode, data)
-		return
-	}
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
+func GetLocation(url string, cache *pokecache.Cache) {
 	location := Location{}
-	err = json.Unmarshal(data, &location)
-	if err != nil {
-		fmt.Println(err)
-		return
+
+	if val, ok := cache.Get(url); ok {
+		err := json.Unmarshal(val, &location)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(location.Name)
+	} else {
+		response, err := http.Get(url)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		body, err := io.ReadAll(response.Body)
+		response.Body.Close()
+		if response.StatusCode > 299 {
+			fmt.Printf("Response failed with status code: %d and\nbody: %s\n", response.StatusCode, body)
+			return
+		}
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		cache.Add(url, body)
+		err = json.Unmarshal(body, &location)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 	}
 	fmt.Println(location.Name)
+
 }
