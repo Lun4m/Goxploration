@@ -14,13 +14,9 @@ func NewCache(interval time.Duration) *Cache {
 	ticker := time.NewTicker(interval)
 	cache := Cache{data: make(map[string]cacheEntry), mu: &sync.Mutex{}}
 	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				cache.reapLoop(interval)
-			}
+		for range ticker.C {
+			cache.reapLoop(interval)
 		}
-
 	}()
 	return &cache
 }
