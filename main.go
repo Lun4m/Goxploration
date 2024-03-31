@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"pokedexcli/internal/pokeapi"
@@ -21,8 +22,18 @@ func main() {
 		fmt.Print("pokedex > ")
 		scanner.Scan()
 		input := scanner.Text()
+
+		input_string := ""
+		split := strings.Split(input, " ")
+		input = split[0]
+
+		if len(split) == 2 {
+			input_string = split[1]
+
+		}
+
 		if command, ok := commands[input]; ok {
-			command.callback(&conf, cache)
+			command.callback(input_string, &conf, cache)
 		} else {
 			fmt.Print("Invalid command. ")
 			fmt.Println("Type 'help' to get a list of the available commands\n")

@@ -2,6 +2,7 @@ package pokeapi
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -67,42 +68,42 @@ type Location struct {
 	} `json:"pokemon_encounters"`
 }
 
-func GetLocation(url string, cache *pokecache.Cache) {
+func GetLocation(url string, cache *pokecache.Cache) (Location, error) {
 	location := Location{}
 
 	if val, ok := cache.Get(url); ok {
 		err := json.Unmarshal(val, &location)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return location, err
 		}
 		fmt.Println(location.Name)
 	} else {
 		response, err := http.Get(url)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return location, err
+		}
+
+		if response.StatusCode > 299 {
+			return location, errors.New("Response status code > 299")
 		}
 
 		body, err := io.ReadAll(response.Body)
 		response.Body.Close()
-		if response.StatusCode > 299 {
-			fmt.Printf("Response failed with status code: %d and\nbody: %s\n", response.StatusCode, body)
-			return
-		}
 		if err != nil {
 			fmt.Println(err)
-			return
+			return location, err
 		}
 
 		cache.Add(url, body)
 		err = json.Unmarshal(body, &location)
 		if err != nil {
 			fmt.Println(err)
-			return
+			return location, err
 		}
 
 	}
-	fmt.Println(location.Name)
+	return location, nil
 
 }

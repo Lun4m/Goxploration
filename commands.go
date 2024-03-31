@@ -11,7 +11,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*pokeapi.Config, *pokecache.Cache) error
+	callback    func(string, *pokeapi.Config, *pokecache.Cache) error
 }
 
 func commandHelp() {
@@ -29,7 +29,11 @@ func commandExit() {
 func commandMapForward(conf *pokeapi.Config, cache *pokecache.Cache) {
 	for i := conf.Next; i < conf.Next+20; i++ {
 		url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", i+1)
-		pokeapi.GetLocation(url, cache)
+		location, err := pokeapi.GetLocation(url, cache)
+		if err != nil {
+			return
+		}
+		fmt.Println(location.Name)
 	}
 	fmt.Println()
 
@@ -45,6 +49,11 @@ func commandMapBack(conf *pokeapi.Config, cache *pokecache.Cache) {
 	for i := conf.Previous; i < conf.Previous+20; i++ {
 		url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", i+1)
 		pokeapi.GetLocation(url, cache)
+		location, err := pokeapi.GetLocation(url, cache)
+		if err != nil {
+			return
+		}
+		fmt.Println(location.Name)
 	}
 	fmt.Println()
 
@@ -52,12 +61,27 @@ func commandMapBack(conf *pokeapi.Config, cache *pokecache.Cache) {
 	conf.Previous -= 20
 }
 
+func commandExplore(input string, cache *pokecache.Cache) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", input)
+	location, err := pokeapi.GetLocation(url, cache)
+	if err != nil {
+		fmt.Println("Unknown area\n")
+		return
+	}
+
+	fmt.Println("Found these Pokemon:")
+	for _, pokemon := range location.PokemonEncounters {
+		fmt.Printf(" - %s\n", pokemon.Pokemon.Name)
+	}
+	fmt.Println()
+}
+
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
-			callback: func(c *pokeapi.Config, ch *pokecache.Cache) error {
+			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandHelp()
 				return nil
 			},
@@ -65,7 +89,7 @@ func getCommands() map[string]cliCommand {
 		"exit": {
 			name:        "exit",
 			description: "Exit the program",
-			callback: func(c *pokeapi.Config, ch *pokecache.Cache) error {
+			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandExit()
 				return nil
 			},
@@ -73,7 +97,7 @@ func getCommands() map[string]cliCommand {
 		"map": {
 			name:        "map",
 			description: "Display the next 20 location areas in the Pokemon world",
-			callback: func(c *pokeapi.Config, ch *pokecache.Cache) error {
+			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandMapForward(c, ch)
 				return nil
 			},
@@ -81,8 +105,16 @@ func getCommands() map[string]cliCommand {
 		"mapb": {
 			name:        "mapb",
 			description: "Display the previous 20 location areas in the Pokemon world",
-			callback: func(c *pokeapi.Config, ch *pokecache.Cache) error {
+			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandMapBack(c, ch)
+				return nil
+			},
+		},
+		"explore": {
+			name:        "explore",
+			description: "Display the names of the pokemon present in the region",
+			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
+				commandExplore(s, ch)
 				return nil
 			},
 		},
