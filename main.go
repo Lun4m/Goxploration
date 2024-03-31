@@ -23,17 +23,13 @@ func main() {
 		scanner.Scan()
 		input := scanner.Text()
 
-		input_string := ""
-		split := strings.Split(input, " ")
+		split := strings.Fields(input)
 		input = split[0]
 
-		if len(split) == 2 {
-			input_string = split[1]
-
-		}
-
 		if command, ok := commands[input]; ok {
-			command.callback(input_string, &conf, cache)
+			if command.isValid(split) {
+				command.callback(split, &conf, cache)
+			}
 		} else {
 			fmt.Print("Invalid command. ")
 			fmt.Println("Type 'help' to get a list of the available commands\n")

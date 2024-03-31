@@ -9,9 +9,26 @@ import (
 )
 
 type cliCommand struct {
-	name        string
-	description string
-	callback    func(string, *pokeapi.Config, *pokecache.Cache) error
+	name           string
+	description    string
+	callback       func([]string, *pokeapi.Config, *pokecache.Cache) error
+	requires_input bool
+}
+
+func (self *cliCommand) isValid(input []string) bool {
+	if !self.requires_input && len(input) > 1 {
+		fmt.Printf("'%s' doesn't accept arguments\n\n", self.name)
+		return false
+	}
+	if self.requires_input && len(input) == 1 {
+		fmt.Printf("'%s' requires an argument\n\n", self.name)
+		return false
+	}
+	if self.requires_input && len(input) > 2 {
+		fmt.Printf("'%s' only accepts a single argument\n\n", self.name)
+		return false
+	}
+	return true
 }
 
 func commandHelp() {
@@ -79,42 +96,48 @@ func commandExplore(input string, cache *pokecache.Cache) {
 func getCommands() map[string]cliCommand {
 	return map[string]cliCommand{
 		"help": {
-			name:        "help",
-			description: "Displays a help message",
-			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
+			name:           "help",
+			description:    "Displays a help message",
+			requires_input: false,
+			callback: func(s []string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandHelp()
 				return nil
 			},
 		},
 		"exit": {
-			name:        "exit",
-			description: "Exit the program",
-			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
+			name:           "exit",
+			description:    "Exit the program",
+			requires_input: false,
+			callback: func(s []string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandExit()
 				return nil
 			},
 		},
 		"map": {
-			name:        "map",
-			description: "Display the next 20 location areas in the Pokemon world",
-			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
+			name:           "map",
+			description:    "Display the next 20 location areas in the Pokemon world",
+			requires_input: false,
+			callback: func(s []string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandMapForward(c, ch)
 				return nil
 			},
 		},
 		"mapb": {
-			name:        "mapb",
-			description: "Display the previous 20 location areas in the Pokemon world",
-			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
+			name:           "mapb",
+			description:    "Display the previous 20 location areas in the Pokemon world",
+			requires_input: false,
+			callback: func(s []string, c *pokeapi.Config, ch *pokecache.Cache) error {
 				commandMapBack(c, ch)
 				return nil
 			},
 		},
 		"explore": {
-			name:        "explore",
-			description: "Display the names of the pokemon present in the region",
-			callback: func(s string, c *pokeapi.Config, ch *pokecache.Cache) error {
-				commandExplore(s, ch)
+			name:           "explore",
+			description:    "Display the names of the pokemon present in the region",
+			requires_input: true,
+			callback: func(s []string, c *pokeapi.Config, ch *pokecache.Cache) error {
+				arg := s[1]
+				commandExplore(arg, ch)
 				return nil
 			},
 		},
