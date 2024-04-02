@@ -33,7 +33,11 @@ func (self *cliCommand) isValid(input []string) bool {
 
 func commandHelp() {
 	fmt.Println("\nAvailable commands:\n")
-	for _, command := range getCommands() {
+	keys := [6]string{"help", "exit", "map", "mapb", "explore", "catch"}
+
+	commands := getCommands()
+	for _, key := range keys {
+		command := commands[key]
 		fmt.Printf("%v: %v\n", command.name, command.description)
 	}
 	fmt.Println()
