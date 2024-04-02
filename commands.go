@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sort"
 	"time"
 
 	"pokedexcli/internal/pokeapi"
@@ -35,7 +36,7 @@ func (self *cliCommand) isValid(input []string) bool {
 
 func commandHelp() {
 	fmt.Println("\nAvailable commands:\n")
-	keys := [6]string{"help", "exit", "map", "mapb", "explore", "catch"}
+	keys := []string{"help", "exit", "map", "mapb", "explore", "catch", "pokedex", "inspect"}
 
 	commands := getCommands()
 	for _, key := range keys {
@@ -105,7 +106,7 @@ func getCatchProbability(baseExp int) float64 {
 	}
 	x := float64(baseExp-36) / float64(360-36)
 	// Simple interpolation
-	return 0.05*x + (1.0-x)*0.75
+	return 0.01*x + (1.0-x)*0.5
 }
 
 func commandCatch(input string, pokedex map[string]pokeapi.Pokemon, cache *pokecache.Cache) {
@@ -131,6 +132,44 @@ func commandCatch(input string, pokedex map[string]pokeapi.Pokemon, cache *pokec
 		pokedex[input] = pokemon
 	} else {
 		fmt.Printf("%v escaped!\n", input)
+	}
+	fmt.Println()
+}
+
+func commandInspect(input string, pokedex map[string]pokeapi.Pokemon) {
+	if pokemon, ok := pokedex[input]; !ok {
+		fmt.Printf("%v is not in your pokedex\n\n", input)
+		return
+	} else {
+		fmt.Printf("Name: %v\n", input)
+		fmt.Printf("Height: %v\n", pokemon.Height)
+		fmt.Printf("Weight: %v\n", pokemon.Weight)
+		fmt.Println("Stats:")
+		for _, stat := range pokemon.Stats {
+			fmt.Printf("  - %v: %v\n", stat.Stat.Name, stat.BaseStat)
+		}
+		fmt.Println("Types:")
+		for _, tp := range pokemon.Types {
+			fmt.Printf("  - %v\n", tp.Type.Name)
+		}
+		fmt.Println()
+	}
+}
+
+func commandPokedex(pokedex map[string]pokeapi.Pokemon) {
+	pokemons := make([]string, len(pokedex))
+
+	i := 0
+	for key := range pokedex {
+		pokemons[i] = key
+		i++
+	}
+
+	sort.Sort(sort.StringSlice(pokemons))
+
+	fmt.Println("Your pokedex:")
+	for _, pokemon := range pokemons {
+		fmt.Printf("  - %v\n", pokemon)
 	}
 	fmt.Println()
 }
@@ -190,6 +229,25 @@ func getCommands() map[string]cliCommand {
 			callback: func(s []string, p map[string]pokeapi.Pokemon, c *pokeapi.Config, ch *pokecache.Cache) error {
 				arg := s[1]
 				commandCatch(arg, p, ch)
+				return nil
+			},
+		},
+		"inspect": {
+			name:           "inspect",
+			description:    "Shows the stats of a pokemon registered in your pokedex",
+			requires_input: true,
+			callback: func(s []string, p map[string]pokeapi.Pokemon, c *pokeapi.Config, ch *pokecache.Cache) error {
+				arg := s[1]
+				commandInspect(arg, p)
+				return nil
+			},
+		},
+		"pokedex": {
+			name:           "pokedex",
+			description:    "List the pokemon registered in your pokedex",
+			requires_input: false,
+			callback: func(s []string, p map[string]pokeapi.Pokemon, c *pokeapi.Config, ch *pokecache.Cache) error {
+				commandPokedex(p)
 				return nil
 			},
 		},
