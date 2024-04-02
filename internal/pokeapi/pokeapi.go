@@ -416,5 +416,4 @@ func GetPokemon(url string, cache *pokecache.Cache) (Pokemon, error) {
 
 	}
 	return pokemon, nil
-
 }

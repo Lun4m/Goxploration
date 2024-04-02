@@ -42,7 +42,6 @@ func (self *Cache) reapLoop(interval time.Duration) {
 		}
 	}
 	self.mu.Unlock()
-
 }
 
 type cacheEntry struct {

@@ -46,10 +46,6 @@ func commandHelp() {
 	fmt.Println()
 }
 
-func commandExit() {
-	os.Exit(0)
-}
-
 func commandMapForward(conf *pokeapi.Config, cache *pokecache.Cache) {
 	for i := conf.Next; i < conf.Next+20; i++ {
 		url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%d/", i+1)
@@ -190,7 +186,7 @@ func getCommands() map[string]cliCommand {
 			description:    "Exit the program",
 			requires_input: false,
 			callback: func(s []string, p map[string]pokeapi.Pokemon, c *pokeapi.Config, ch *pokecache.Cache) error {
-				commandExit()
+				os.Exit(0)
 				return nil
 			},
 		},
