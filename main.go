@@ -17,6 +17,7 @@ func main() {
 	conf := pokeapi.Config{}
 	commands := getCommands()
 	cache := pokecache.NewCache(1 * time.Minute)
+	pokedex := make(map[string]pokeapi.Pokemon)
 
 	for {
 		fmt.Print("pokedex > ")
@@ -28,7 +29,7 @@ func main() {
 
 		if command, ok := commands[input]; ok {
 			if command.isValid(split) {
-				command.callback(split, &conf, cache)
+				command.callback(split, pokedex, &conf, cache)
 			}
 		} else {
 			fmt.Print("Invalid command. ")
